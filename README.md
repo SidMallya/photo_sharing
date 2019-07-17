@@ -25,7 +25,7 @@ To quickly deploy this website on AWS, follow the below steps:
 
 3. Create an RDS MySQL database instance and allow incoming traffic on port 3306 from the EC2 instance which you are going to launch in the next step.
 
-4. Launch an Amazon Linux EC2 instance with the following user data and the IAM role created in step 2.  
+4. Launch an Amazon Linux EC2 instance with the following user data and the IAM role created in step 2.  The user data takes care of installing Apache, PHP, MySQL, Git and Composer and downloads the code repository on GitHub.  The user data and IAM role can be specified in "Step 3: Configure Instance Details" while launching an EC2 instance.  
 
 ```shell
 #!/bin/bash -ex
@@ -43,8 +43,6 @@ sudo php -r "unlink('composer-setup.php');"
 sudo ./composer.phar require aws/aws-sdk-php
 chown -R apache /var/www/html
 ```
-
-    The user data takes care of installing Apache, PHP, MySQL, Git and Composer and downloads the code repository on GitHub.    The user data and IAM role can be specified in "Step 3: Configure Instance Details" while launching an EC2 instance.
 
 5. SSH into the EC2 instance and update the following details in /var/www/html/photo_sharing/config.php file:
     RDS endpoint
