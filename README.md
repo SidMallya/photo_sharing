@@ -27,7 +27,7 @@ To quickly deploy this website on AWS, follow the below steps:
 
 4. Launch an Amazon Linux EC2 instance with the following user data and the IAM role created in step 2.  
 
-```bash
+```shell
 #!/bin/bash -ex
 yum -y update
 yum install -y httpd24 php70 mysql56-server php70-mysqlnd
