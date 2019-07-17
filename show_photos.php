@@ -32,7 +32,8 @@ else {
 
 echo "<b>Photo share link: </b>";
 $public_hostname = file_get_contents("http://169.254.169.254/latest/meta-data/public-hostname");
-echo $public_hostname."/share_photos.php?email=".$_SESSION['email'];
+$dir_name = basename(dirname(__FILE__));
+echo $public_hostname."/".$dir_name."/share_photos.php?email=".$_SESSION['email'];
 echo "<br><br>";
 
 ?>
