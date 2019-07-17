@@ -27,7 +27,7 @@ To quickly deploy this website on AWS, follow the below steps:
 
 4. Launch an Amazon Linux EC2 instance with the following user data and the IAM role created in step 2.  
 
-```shell
+```bash
 #!/bin/bash -ex
 yum -y update
 yum install -y httpd24 php70 mysql56-server php70-mysqlnd
@@ -44,15 +44,15 @@ sudo ./composer.phar require aws/aws-sdk-php
 chown -R apache /var/www/html
 ```
 
-The user data takes care of installing Apache, PHP, MySQL, Git and Composer and downloads the code repository on GitHub.  The user data and IAM role can be specified in "Step 3: Configure Instance Details" while launching an EC2 instance.
+    The user data takes care of installing Apache, PHP, MySQL, Git and Composer and downloads the code repository on GitHub.    The user data and IAM role can be specified in "Step 3: Configure Instance Details" while launching an EC2 instance.
 
 5. SSH into the EC2 instance and update the following details in /var/www/html/photo_sharing/config.php file:
-RDS endpoint
-DB username
-DB password
-S3 bucket name (created in step 1)
-AWS Region
+    RDS endpoint
+    DB username
+    DB password
+    S3 bucket name (created in step 1)
+    AWS Region
 
-Note: Default database name is photo_sharing.  If you change this setting, then update init.sql file accordingly.
+    Note: Default database name is photo_sharing.  If you change this setting, then update init.sql file accordingly.
 
 6. Execute the commands in data/init.sql to create prerequisite database and tables.
