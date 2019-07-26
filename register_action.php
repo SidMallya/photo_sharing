@@ -49,7 +49,7 @@
 		}
 		else {
 			echo "Registration unsuccessful due to technical problems.  Error(for support personnel): ".mysqli_error($link)." <br>";
-			echo '<meta http-equiv="Refresh" content="2;url=register.php">';
+			echo '<meta http-equiv="Refresh" content="5;url=register.php">';
 		}
 		
 		mysqli_close($link);
