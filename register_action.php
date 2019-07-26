@@ -55,5 +55,8 @@
 		mysqli_close($link);
 
 	}
+	else {
+		echo '<meta http-equiv="Refresh" content="5;url=register.php">';
+	}
 	
 ?>
