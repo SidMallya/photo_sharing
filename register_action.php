@@ -47,9 +47,10 @@
 		  	echo 'Registration successful.  Redirecting to login page...<br>	';
 		  	echo '<meta http-equiv="Refresh" content="2;url=index.php">';
 		}
-		else 
+		else {
 			echo "Registration unsuccessful due to technical problems.  Error(for support personnel): ".mysqli_error($link)." <br>";
-		
+			echo '<meta http-equiv="Refresh" content="2;url=register.php">';
+		}
 		
 		mysqli_close($link);
 
