@@ -1,0 +1,279 @@
+{  
+	"AWSTemplateFormatVersion":"2010-09-09",
+	
+	"Description" : "An AWS CloudFormation template to launch a PHP-MySQL website on EC2, RDS and S3.",
+	
+	"Parameters" : {
+	
+		"DBUsername": {
+		  "Default": "admin",
+		  "NoEcho": "true",
+		  "Description" : "The database admin account username",
+		  "Type": "String",
+		  "MinLength": "1",
+		  "MaxLength": "16",
+		  "AllowedPattern" : "[a-zA-Z][a-zA-Z0-9]*",
+		  "ConstraintDescription" : "must begin with a letter and contain only alphanumeric characters."
+		},
+		
+		"DBPassword": {
+		  "Default": "password",
+		  "NoEcho": "true",
+		  "Description" : "The database admin account password",
+		  "Type": "String",
+		  "MinLength": "8",
+		  "MaxLength": "41",
+		  "AllowedPattern" : "[a-zA-Z0-9]*",
+		  "ConstraintDescription" : "must contain only alphanumeric characters."
+		},
+		
+		"KeyName": {
+			"Description": "Name of an existing EC2 KeyPair to enable SSH access to the instances",
+			"Type": "AWS::EC2::KeyPair::KeyName",
+			"ConstraintDescription": "must be the name of an existing EC2 KeyPair."
+		},
+		
+        "SSHLocation": {
+            "Description": "The IP address range that can be used to SSH to the EC2 instances",
+            "Type": "String",
+            "MinLength": "9",
+            "MaxLength": "18",
+            "Default": "0.0.0.0/0",
+            "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
+            "ConstraintDescription": "must be a valid IP CIDR range of the form x.x.x.x/x."
+        }
+
+	},
+
+	"Mappings" : {
+		"RegionMap" : {
+		  "us-east-1"      : { "HVM64" : "ami-0ff8a91507f77f867"},
+		  "us-east-2"	   : { "HVM64" : "ami-0b59bfac6be064b78"},
+		  "us-west-2"      : { "HVM64" : "ami-a0cfeed8"},
+		  "us-west-1"      : { "HVM64" : "ami-0bdb828fd58c52235"},
+		  "eu-west-1"      : { "HVM64" : "ami-047bb4163c506cd98"},
+		  "ap-southeast-1" : { "HVM64" : "ami-08569b978cc4dfa10"},
+		  "ap-southeast-2" : { "HVM64" : "ami-09b42976632b27e9b"},
+		  "ap-northeast-1" : { "HVM64" : "ami-06cd52961ce9f0d85"},
+		  "sa-east-1"      : { "HVM64" : "ami-07b14488da8ea02a0"}
+		}
+	},
+
+
+	"Resources":{
+
+		"PhotoBucket" : {
+			"Type" : "AWS::S3::Bucket"
+		},
+		
+		"PhotoBucketPolicy" : {
+			"Type" : "AWS::S3::BucketPolicy",
+			"Properties" : {
+				"Bucket" :  {"Ref" : "PhotoBucket"},
+                "PolicyDocument": {
+                    "Id": "MyPolicy",
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Sid": "PublicReadForGetBucketObjects",
+                            "Effect": "Allow",
+                            "Principal": "*",
+                            "Action": "s3:GetObject",
+                            "Resource": {
+                                "Fn::Join": [
+                                    "",
+                                    [
+                                        "arn:aws:s3:::",
+                                        {
+                                            "Ref": "PhotoBucket"
+                                        },
+                                        "/*"
+                                    ]
+                                ]
+                            }
+                        }
+                    ]
+                }
+			}
+		},
+
+		"WebServerSecurityGroup" : {
+			"Type" : "AWS::EC2::SecurityGroup",
+			"Properties" : {
+			 "GroupDescription" : "allow connections from specified CIDR ranges",
+			 "SecurityGroupIngress" : [
+				 {
+					 "IpProtocol" : "tcp",
+					 "FromPort" : "80",
+					 "ToPort" : "80",
+					 "CidrIp" : "0.0.0.0/0"
+				 },{
+					 "IpProtocol" : "tcp",
+					 "FromPort" : "22",
+					 "ToPort" : "22",
+					 "CidrIp" : {
+						 "Ref": "SSHLocation"
+					 }
+				 }
+			 ]
+			}
+		},
+		
+		"DBInstance" : {
+		  "Type": "AWS::RDS::DBInstance",
+		  "Properties": {
+			"DBInstanceClass"   : "db.t2.micro",
+			"DBSecurityGroups"  : [{ "Ref" : "DBSecurityGroup" }],
+			"AllocatedStorage"  : "5",
+			"Engine"            : "MySQL",
+			"MasterUsername"    : { "Ref" : "DBUsername" },
+			"MasterUserPassword": { "Ref" : "DBPassword" },
+			"Port" : "3306",
+			"BackupRetentionPeriod" : "0"
+		  }
+		},
+		
+		"DBSecurityGroup": {
+		  "Type": "AWS::RDS::DBSecurityGroup",
+		  "Properties": {
+			"DBSecurityGroupIngress": [
+			  {"EC2SecurityGroupName": { "Ref": "WebServerSecurityGroup"}}
+			],
+			"GroupDescription"      : "Access to RDS MySQL DB"
+		  }
+		},
+		
+		"MyEC2Instance": {  
+			"Type":"AWS::EC2::Instance",
+			"Properties":{  
+				"ImageId": { "Fn::FindInMap" : [ "RegionMap", { "Ref" : "AWS::Region" }, "HVM64"]},
+				"InstanceType": "t2.micro",
+				"IamInstanceProfile" : { "Ref" : "S3AccessInstanceProfile" },
+				"SecurityGroups": [
+					{
+					"Ref": "WebServerSecurityGroup"
+					}
+				],
+				"KeyName": {
+					"Ref": "KeyName"
+				},
+				"BlockDeviceMappings":[  
+				   {  
+					  "DeviceName":"/dev/xvda",
+					  "Ebs":{  
+						 "VolumeType":"gp2",
+						 "DeleteOnTermination":"true",
+						 "VolumeSize":"8"
+					  }
+				   }
+				],
+				"UserData":  { "Fn::Base64" : { "Fn::Join" : ["", [
+					"#!/bin/bash -ex\n",
+					"yum -y update\n",
+					"yum install -y httpd24 php70 mysql56-server php70-mysqlnd\n",
+					"yum install git -y\n",
+					"chkconfig httpd on\n",
+					"service httpd start\n",
+					"cd /var/www/html\n",
+					"git clone https://github.com/SidMallya/photo_sharing.git\n",
+					"cd photo_sharing\n",
+					"sudo php -r \"copy('https://getcomposer.org/installer', 'composer-setup.php');\"\n",
+					"sudo php composer-setup.php\n",
+					"sudo php -r \"unlink('composer-setup.php');\"\n",
+					"sudo ./composer.phar require aws/aws-sdk-php\n",
+					"echo \"<?php\" > config.php\n",
+					"echo \"\\$endpoint = '", {"Fn::GetAtt" : ["DBInstance", "Endpoint.Address"]}, "';\" >> config.php\n",
+					"echo \"\\$DB = 'photo_sharing';\" >> config.php\n",
+					"echo \"\\$user = '", { "Ref" : "DBUsername" }, "';\" >> config.php\n",
+					"echo \"\\$pwd = '", { "Ref" : "DBPassword" }, "';\" >> config.php\n",
+					"echo \"\\$bucket = '", { "Ref" : "PhotoBucket" }, "';\" >> config.php\n", 
+					"echo \"\\$region = '", { "Ref" : "AWS::Region" }, "';\" >> config.php\n",
+					"echo \"?>\" >> config.php\n",
+					"chown -R apache /var/www/html\n",
+					"mysql -u ", { "Ref" : "DBUsername" }, " -p", { "Ref" : "DBPassword" }, " -h ", {"Fn::GetAtt" : ["DBInstance", "Endpoint.Address"]}, " < data/init.sql"
+				]]}}
+			}
+		},
+		
+		"S3AccessInstanceProfile": {
+			"Type": "AWS::IAM::InstanceProfile",
+			"Properties": {
+				"Path": "/",
+				"Roles": [
+					{
+						"Ref": "S3AccessBucketsRole"
+					}
+				]
+			}
+		},
+		
+		"S3AccessBucketsPolicy": {
+			"Type": "AWS::IAM::Policy",
+			"Properties": {
+				"PolicyName": "S3AccessBucketsPolicy",
+				"PolicyDocument": {
+					"Statement": [
+						{
+						  "Sid": "Stmt1564058629385",
+						  "Action": [
+							"s3:GetObject",
+							"s3:PutObject"
+						  ],
+						  "Effect": "Allow",
+						  "Resource": { "Fn::Join" : ["", ["arn:aws:s3:::", { "Ref" : "PhotoBucket" } ,"/*"]]}
+						}
+					]
+				},
+				"Roles": [
+					{
+						"Ref": "S3AccessBucketsRole"
+					}
+				]
+			}
+		},
+		
+		"S3AccessBucketsRole": {
+			"Type": "AWS::IAM::Role",
+			"Properties": {
+				"AssumeRolePolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Principal": {
+								"Service": [
+									"ec2.amazonaws.com"
+								]
+							},
+							"Action": [
+								"sts:AssumeRole"
+							]
+						}
+					]
+				},
+				"Path": "/"
+			}
+		}
+
+	},
+	
+	"Outputs": {
+	
+		"BucketName": {
+			"Value": {
+				"Ref": "PhotoBucket"
+			},
+			"Description": "Name of the Amazon S3 bucket"
+		},
+		
+		"RDSEndpoint" : {
+			"Value" : {"Fn::GetAtt" : ["DBInstance", "Endpoint.Address"]},
+			"Description" : "RDS Endpoint"
+		},
+		
+		"WebsiteURL" : {
+			"Value" : { "Fn::Join" : ["", ["http://", { "Fn::GetAtt" : [ "MyEC2Instance", "PublicDnsName" ]}, "/photo_sharing/"]] },
+			"Description" : "Website URL"
+		}
+	}  
+}
