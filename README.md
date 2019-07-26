@@ -1,7 +1,9 @@
 # photo_sharing
 A simple photo sharing website using PHP, MySQL and Amazon S3 with option to automatically deploy using AWS CloudFormation.
 
-To quickly deploy this website on AWS manually, follow the below steps:
+To deploy this website on AWS automatically using CloudFormation, use the template photo_sharing_cfn_template.json to create a stack by entering the stack name, parameter values and checking the checkbox "I acknowledge that AWS CloudFormation might create IAM resources.". Once stack is successfully created you can view website URL, RDS endpoint and name of the Amazon S3 bucket in the Outputs tab.
+
+To deploy this website on AWS manually, follow the below steps:
 
 1. Create an S3 bucket, disable "Block public access" and add the following bucket policy replacing "BucketName" with the actual bucket name:
 
