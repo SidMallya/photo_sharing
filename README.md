@@ -1,7 +1,7 @@
 # photo_sharing
-A very simple photo sharing website using PHP, MySQL and Amazon S3.
+A simple photo sharing website using PHP, MySQL and Amazon S3 with option to automatically deploy using AWS CloudFormation.
 
-To quickly deploy this website on AWS, follow the below steps:
+To quickly deploy this website on AWS manually, follow the below steps:
 
 1. Create an S3 bucket, disable "Block public access" and add the following bucket policy replacing "BucketName" with the actual bucket name:
 
