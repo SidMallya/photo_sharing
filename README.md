@@ -53,4 +53,4 @@ chown -R apache /var/www/html
 
     Note: Default database name is photo_sharing.  If you change this setting, then update init.sql file accordingly.
 
-6. Execute the commands in data/init.sql to create prerequisite database and tables.
+6. Execute the SQL commands in data/init.sql to create prerequisite database and tables.
