@@ -7,7 +7,6 @@
 	
 		"DBUsername": {
 		  "Default": "admin",
-		  "NoEcho": "true",
 		  "Description" : "The database admin account username",
 		  "Type": "String",
 		  "MinLength": "1",
